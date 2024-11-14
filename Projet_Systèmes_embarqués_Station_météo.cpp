@@ -52,25 +52,25 @@ prelevement prel;  // Declaring an instance of the struct
 
 ////////--Définitions des adresses pour stocker sur l'EEPROM, il faut prendre en compte la place occupée par toutes les variables avant notre variable--////////
 
-#define LOG_INTERVAL_ADDR 0                                               // L'intervalle de temps entre 2 prises capteurs
-#define FILE_MAX_SIZE_ADDR (LOG_INTERVAL_ADDR + sizeof(int))              // La taille maximale du fichier avant de le fermer                      
-#define TIMEOUT_ADDR (FILE_MAX_SIZE_ADDR + sizeof(int))                   // La durée durant laquelle on attends que un capteur réponde, si elle est dépassé, on déclare une erreur
+#define LOG_INTERVAL_ADDR 0              // L'intervalle de temps entre 2 prises capteurs
+#define FILE_MAX_SIZE_ADDR 2             // La taille maximale du fichier avant de le fermer                      
+#define TIMEOUT_ADDR 4                   // La durée durant laquelle on attends que un capteur réponde, si elle est dépassé, on déclare une erreur
 
-#define LUMIN_ADDR (TIMEOUT_ADDR + sizeof(int))                           // La variable qui définie si l'on prends les données du capteur de luminosité
-#define LUMIN_LOW_ADDR (LUMIN_ADDR + sizeof(bool))                        // La variable qui définie la valeur du port analogique en dessous de laquelle la luminosité est considérée comme faible
-#define LUMIN_HIGH_ADDR (LUMIN_LOW_ADDR + sizeof(int))                    // La variable qui définie la valeur du port analogique au dessus de laquelle la luminosité est considérée comme haute 
+#define LUMIN_ADDR 6                     // La variable qui définie si l'on prends les données du capteur de luminosité
+#define LUMIN_LOW_ADDR 7                 // La variable qui définie la valeur du port analogique en dessous de laquelle la luminosité est considérée comme faible
+#define LUMIN_HIGH_ADDR 9                // La variable qui définie la valeur du port analogique au dessus de laquelle la luminosité est considérée comme haute 
 
-#define TEMP_AIR_ADDR (LUMIN_HIGH_ADDR + sizeof(int))                     // La variable qui définie si l'on prends les données pour la température de l'air
-#define MIN_TEMP_AIR_ADDR (TEMP_AIR_ADDR + sizeof(int))                   // La variable qui définie la valeur basse à partir de laquelle on considère que le capteur est en erreur
-#define MAX_TEMP_AIR_ADDR (MIN_TEMP_AIR_ADDR + sizeof(int))               // La variable qui définie la valeur haute à partir de laquelle on considère que le capteur est en erreur
+#define TEMP_AIR_ADDR 11                 // La variable qui définie si l'on prends les données pour la température de l'air
+#define MIN_TEMP_AIR_ADDR 12             // La variable qui définie la valeur basse à partir de laquelle on considère que le capteur est en erreur
+#define MAX_TEMP_AIR_ADDR 14             // La variable qui définie la valeur haute à partir de laquelle on considère que le capteur est en erreur
 
-#define HYGR_ADDR (MAX_TEMP_AIR_ADDR + sizeof(int))                       // La variable qui définie si l'on prends les données pour l'humidité
-#define HYGR_MIN_ADDR (HYGR_ADDR + sizeof(bool))                          // La variable qui définie la valeur basse à partir de laquelle la température ne permet pas de prendre les données
-#define HYGR_MAX_ADDR (HYGR_MIN_ADDR + sizeof(int))                       // La variable qui définie la valeur haute à partir de laquelle la température ne permet pas de prendre les données
+#define HYGR_ADDR 16                     // La variable qui définie si l'on prends les données pour l'humidité
+#define HYGR_MIN_ADDR 17                 // La variable qui définie la valeur basse à partir de laquelle la température ne permet pas de prendre les données
+#define HYGR_MAX_ADDR 19                 // La variable qui définie la valeur haute à partir de laquelle la température ne permet pas de prendre les données
 
-#define PRESSURE_ADDR (HYGR_MAX_ADDR + sizeof(int))                       // La variable qui définie si l'on prens les données pour la pression atmosphérique
-#define PRESSURE_MIN_ADDR (PRESSURE_ADDR + sizeof(bool))                  // La variable qui définie la valeur basse à partir de laquelle on considère que la prise du capteur pour la pression est erronée
-#define PRESSURE_MAX_ADDR (PRESSURE_MIN_ADDR + sizeof(int))               // La variable qui définie la valeur haute à partir de laquelle on considère que la prise du capteur pour la pression est erronée
+#define PRESSURE_ADDR 21                 // La variable qui définie si l'on prens les données pour la pression atmosphérique
+#define PRESSURE_MIN_ADDR 22             // La variable qui définie la valeur basse à partir de laquelle on considère que la prise du capteur pour la pression est erronée
+#define PRESSURE_MAX_ADDR 24             // La variable qui définie la valeur haute à partir de laquelle on considère que la prise du capteur pour la pression est erronée
 
 
 
@@ -81,23 +81,17 @@ prelevement prel;  // Declaring an instance of the struct
 
 
 //---Variables globales---//
-volatile byte cntcapt;  //On initialise le timer de prélèvement
+volatile byte cntcapt;                //On initialise le timer de prélèvement
 volatile int cntbouton = 5000; 		    // 5 secondes
-volatile byte cntdemarrage = 5; 	    // 5 secondes au démarrage pour entrer en mode maintenance
-volatile int cntconf = 1600; 		      // initialisé dans ModeConfig
-volatile bool red_pushed = 0; 		    // Boutton rouge : 	0 = boutton relaché, 1 = boutton appuyé
-volatile bool green_pushed = 0; 	    // Boutton vert : 	0 = boutton relaché, 1 = boutton appuyé
+volatile byte cntdemarrage = 5; 	    // donne un délai de 5 secondes au démarrage pour entrer en mode config
+volatile int cntconf = 1600; 		      // initialisé dans ModeConfig donne la valeur en secondes durant lesquelles 
+volatile bool red_pushed = 0; 		    // Bouton rouge : 	0 = bouton relaché, 1 = bouton appuyé
+volatile bool green_pushed = 0; 	    // Bouton vert : 	0 = bouton relaché, 1 = bouton appuyé
 volatile byte current_mode = 0; 		  // 0 = standard, 1 = maintenance,  2 = eco, 3 = config
 volatile bool tp_capt = 0;            // flag qui nous sert à savoir si un capteur ne répond pas           
 volatile byte nb_er = 0;              // La variable qui compte le nombre d'erreur de capteurs, à partir de 2, on lance le script de l'erreur led
-volatile bool prise = 0;
-volatile byte TIMEOUT;
-
-// On paramêtre notre liaison série émulée et notre ChainableLED
-
-
-
-
+volatile bool prise = 0;              // Flag qui nous permet de savoir si il est temps de prendre les 
+volatile byte TIMEOUT;                // On initialise notre timeout
 
 //---Déclaration des fonctions---//
 
@@ -143,7 +137,7 @@ void GPS(prelevement *prel);         // Déclaration de la fonction qui prends l
 
 void save(prelevement *prel);        // Déclaration de la fonction de sauvegarde des données
 
-
+void EspaceLibre(int max_size, SdFat *sd); // Déclaration de la fonction qui permet d'obtenir l'espace libre restant dans la carte, et en fonction de si il reste de la place où non, invoque l'erreur d'espace
 
 void stad ();                        // allumer la led pour le Mode standard
 
@@ -155,33 +149,38 @@ void mtn ();                         // allumer la led pour le Mode Maintenance
 
 void SetErrors(int er_code);         // Déclaration de la fonction qui allume les leds en fonction du paramêtre er_code
 
-void clk_er(int er_code);                       // Erreur de la clock RTC
+void clk_er(int er_code);            // Erreur de la clock RTC
 
-void gps_er(int er_code);                       // Erreur dU GPS
+void gps_er(int er_code);            // Erreur dU GPS
 
-void sens_er(int er_code);                      // Erreur d'un / plusieurs capteur(s)
+void sens_er(int er_code);           // Erreur d'un / plusieurs capteur(s)
 
-void data_er(int er_code);                      // Erreur de la validité des données reçues
+void data_er(int er_code);           // Erreur de la validité des données reçues
 
-void sdf_er(int er_code);                       // Capacité pleine sur la carte sd
+void sdf_er(int er_code);            // Capacité pleine sur la carte sd
 
-void sda_er(int er_code);                       // erreur d'accès et ou d'écriture sur la carte sd
-
+void sda_er(int er_code);            // erreur d'accès et ou d'écriture sur la carte sd
 
 
 void setup() {
-  Serial.begin(9600);
-  Wire.begin();
+  Serial.begin(9600);             /// Initialisation de la liaison série
+  Wire.begin();                   /// Initialisation de Wire qui est utilisé pour la RTC
   int log_interval_value;
   EEPROM.get(LOG_INTERVAL_ADDR, log_interval_value);
-  cntcapt =log_interval_value;  //On initialise le timer de prélèvement
-  initialisationtimer1();
-  initialisationtimer2(); 
-  interruption();               //On paramètre les pins 2 et 3 comme interruption	
+  cntcapt =log_interval_value;   //On initialise le timer de prélèvement
+
+  initialisationtimer1();        // Initialise le Timer 1, utilisé principalement pour les prélèvements ainsi que pour la 
+
+  initialisationtimer2();        // Initialise le Timer 2, utilisé principalement pour les boutons
+
+  interruption();                //On paramètre les pins 2 et 3 comme interruption
+
   pinMode(PUSHGREEN, INPUT_PULLUP);   /// On définit notre pin lié au bouton vers comme un input avec une résistance de tirage
   pinMode(PUSHRED, INPUT_PULLUP);     /// On définit notre pin lié au bouton vers comme un input avec une résistance de tirage
-  Serial.println("F_set");
-  prelevement prel;                   /// On déclare la variable prel de type prélèvement
+
+  Serial.println("S_set");            /// On signale à l'utilisateur que la station est opérationelle
+
+  prelevement prel;                   /// On déclare la variable prel de type prélèvement qui stockera nos valeur de prélèvements
   
   ModeStandard();                     /// On débute toujours avec le mode standard (On peux bien évidemment changer de mode après et il y a quelques secondes pour passer au mode configuration)
 }
@@ -206,9 +205,8 @@ void ModeStandard(){
 }
 
 void ModeMaintenance(){
-  current_mode = 1;        // On donne la valeur 2 pour indiquer que le mode actuel est le mode économie
+  current_mode = 1;        // On donne la valeur 1 pour indiquer que le mode actuel est le mode maintenance
 	mtn();
-	//désactiver les sauvegardes, prélèvements consultables en série
 }
 
 void ModeEconomie(){
@@ -225,9 +223,11 @@ void ModeConfig(){
   Serial.println("Entrez commande");
   Serial.read();                                                            /// On vide le port série pour préparer la bonne réception de l'input
   if(!Serial.available()){while(!Serial.available()){}}
-    if(Serial.available()){String input = Serial.readStringUntil('\n');
+    if(Serial.available()){String input = Serial.readStringUntil('\n');    /// On prends l'entrée de l'utilisateur
+
     input.toUpperCase();  // Mise à jour de la chaîne en majuscules pour plus de confort, l'utilisateur peux ainsi taper par exemple rEsET et donc celà deviendra RESET
-    if(input == "RESET"){
+
+    if(input == "RESET"){  // Si l'on souhiate remettre les paramêtres par défaut
       EEPROM.put(LOG_INTERVAL_ADDR,600);
       EEPROM.put(FILE_MAX_SIZE_ADDR,2048);
       EEPROM.put(TIMEOUT_ADDR,30);
@@ -265,10 +265,10 @@ void ModeConfig(){
         input = input.substring(index + 1);   // Partie après le "=" qui est la valeur à mettre pour la variable
         
         // Extraire la partie après l'égalité et la stocker dans data[i+1]
-        index = input.indexOf(' ');  // Chercher un espace (si besoin car celà donne plus de confort à la personne qui tape la commande)
+        index = input.indexOf(' ');
         if (index == -1) {
           data[i + 1] = input;  // Si pas d'espace, prendre le reste de la chaîne
-          input = "";
+          input = "";           // On reset l'input entre chaque extraction de données
         }
         else {
           data[i + 1] = input.substring(0, index);
@@ -277,6 +277,7 @@ void ModeConfig(){
       }
     }
 
+    
     //---Entrées à paramètres---//
     if(data[0] == "LOG_INTERVAL"){
       EEPROM.put(LOG_INTERVAL_ADDR,data[1].toInt());
@@ -324,7 +325,7 @@ void ModeConfig(){
       EEPROM.put(PRESSURE_MAX_ADDR,data[1].toInt());
     }
     }
-    cntconf = 1600; // On remet le compteur de 30 minutes car l'utilisateur à donc été actif comme il a entré une commande
+    cntconf = 1600; // On remet le compteur de 30 minutes car l'utilisateur à donc été actif comme il a entré une commande pour arriver à ce point
   //}
 	//Quitte le mode après 30 min d'inactivité (interruption timer)  conformément au cahier des charges, c'est le seul moyen possible pour sortir du mode configuration 
 }
@@ -335,7 +336,7 @@ void ModeConfig(){
 void RedChange(){
     if (red_pushed == 0){ //on a appuyé sur le boutton 
         red_pushed = 1;
-		cntbouton = 5000;
+		    cntbouton = 5000; // On reset notre compteur
         Timer2();
     }
     else{ //on a relaché le boutton
@@ -347,7 +348,7 @@ void RedChange(){
 void GreenChange(){
   if (green_pushed == 0){ //on a appuyé sur le boutton 
       green_pushed = 1;
-  cntbouton = 5000;
+      cntbouton = 5000; // On reset notre compteur
       Timer2();
   }
   else{ //on a relaché le boutton
@@ -395,7 +396,7 @@ ISR(TIMER2_COMPA_vect){///ISR pour les boutons
 		if (!(PIND & (1 << PD3))){changementVert();} /// C'est le bouton vert qui est pressé, alors on effectue le changement de mode en fonction du bouton vert
 	}}
   if(cntdemarrage > 0){
-    if(!(PIND & (1 << PD2))){current_mode = 3;}
+    if(!(PIND & (1 << PD2))){current_mode = 3;} /// Si le bouton est pressé, on donne la valeur 3 à notre current mode, ce qui fera passer notre station au mode Config
     }
 }
 
@@ -403,7 +404,6 @@ ISR(TIMER1_COMPA_vect){///ISR pour les capteurs
   ///Lié à quand effectuer un prélèvement
   if(cntcapt){
   cntcapt--;
-  Serial.println(cntcapt);
   if(!cntcapt){prise = 1;} /// On active le booléen qui gère si la fonction de la prise des capteurs s'effectue
   }
   
@@ -505,7 +505,7 @@ void preleve(prelevement *prel) {
 //////////////////////////
 
 
-void luminosite(prelevement *prel) {//  Marche comme voulu
+void luminosite(prelevement *prel) {
   bool LUMIN;
   EEPROM.get(LUMIN_ADDR,LUMIN);
   if(LUMIN){
@@ -545,32 +545,32 @@ void luminosite(prelevement *prel) {//  Marche comme voulu
 
 
 void hygrometrie(prelevement *prel) {
-    // Initialize BME280
+    // Initialise BME280
     Tiny_BME280 bme;
 
-    // Try to initialize the BME280 sensor
+    // On lance notre capteur d'hygrométrie
     if (!bme.begin(0x76)) { // Si le capteur d'hygrométrie ne se lance pas
         tp_capt = 1; // Signal that the capture process is in a waiting state
         int TIMEOUT_initial; // On réinitialise TIMEOUT
         EEPROM.get(TIMEOUT_ADDR, TIMEOUT_initial);
         TIMEOUT = TIMEOUT_initial;
 
-        // Retry until the sensor is available or a timeout occurs
+        // On frise notre programme, si le capteur ne réponds pas après TIMEOUT secondes, on augmente le nombre d'erreur (ISR)
         while (!bme.begin(0x76) && tp_capt) {}
         ///Lié au fait que les 2 capteurs n'ont pas répondu
        if(nb_er >= 2){SetErrors(3);}
         
-        // Set values to zero if sensor initialization fails
+        // Set values to zero if sensor initialisation fails
         prel->atmo = 0.0;   // Valeur incohérente
         prel->thermo = 0.0; // Valeur incohérente
         prel->hygro = 0.0;  // Valeur incohérente
     } else {
-        tp_capt = 0; // Reset the capture flag
+        tp_capt = 0; // On remet le 
 
         // Read data from the BME280 sensor
-        float pression = bme.readPressure() / 100.0; // Convert pressure to hPa
-        float temperature = bme.readTemperature(); // Temperature in Celsius
-        float humidite = bme.readHumidity(); // Humidity in percentage
+        float pression = bme.readPressure() / 100.0; // On convertis la pression en Hecto-Pascal
+        float temperature = bme.readTemperature(); // Temperature en degrés Celsius
+        float humidite = bme.readHumidity(); // Humidity en pourcentage
 
         // Process pressure
         bool PRESSURE;
@@ -580,7 +580,7 @@ void hygrometrie(prelevement *prel) {
             EEPROM.get(PRESSURE_MAX_ADDR, PRESSURE_MAX);
             EEPROM.get(PRESSURE_MIN_ADDR, PRESSURE_MIN);
             if (pression < PRESSURE_MAX && pression > PRESSURE_MIN) {
-                prel->atmo = pression; // Store valid pressure value
+                prel->atmo = pression; // On stocke la valeur de la pression atmoshérique
             } else {
                 SetErrors(4);  // donnée incohérente, on invoque l'erreur
             }
@@ -588,23 +588,23 @@ void hygrometrie(prelevement *prel) {
             prel->atmo = 0.0; // Comme la prise est désactivée, on met la valeur à 0
         }
 
-        // Process temperature
+        // Pour la température
         bool TEMP_AIR;
         EEPROM.get(TEMP_AIR_ADDR, TEMP_AIR);
-        if (TEMP_AIR) {
+        if (TEMP_AIR) { // Si le capteur est activé
             int MIN_TEMP_AIR, MAX_TEMP_AIR;
             EEPROM.get(MIN_TEMP_AIR_ADDR, MIN_TEMP_AIR);
             EEPROM.get(MAX_TEMP_AIR_ADDR, MAX_TEMP_AIR);
             if (temperature < MAX_TEMP_AIR && temperature > MIN_TEMP_AIR) {
-                prel->thermo = temperature; // Store valid temperature value
+                prel->thermo = temperature; // On stocke la température dans notre structure
             } else {
                 SetErrors(4);  //La valeur est incohérente... on invoque l'erreur
             }
         } else {
-            prel->thermo = 0.0; // Valeur incohérente
+            prel->thermo = 0.0; // Le capteur étant désactiver, on lui donne une valeur nul
         }
 
-        // Process humidity
+        // La partie pour l'humiditée
         bool HYGR;
         EEPROM.get(HYGR_ADDR, HYGR);
         if (HYGR) {
@@ -612,9 +612,9 @@ void hygrometrie(prelevement *prel) {
             EEPROM.get(HYGR_MAX_ADDR, HYGR_MAX);
             EEPROM.get(HYGR_MIN_ADDR, HYGR_MIN);
             if (temperature < HYGR_MAX && temperature > HYGR_MIN) {
-                prel->hygro = humidite; // Store valid humidity value
+                prel->hygro = humidite; // On stocke la valeur dans notre structure
             } else {
-                prel->hygro = 0.0; // Comme la température ne permet pas de prendre la donnée pour l'hygrométrie, on la met à 0
+                prel->hygro = 0.0; // Comme la température ne permet pas de prendre la donnée pour l'hygrométrie, on la met à 0, on n'appelle pas notre erreur d'incohérence
             }
         } else {
             prel->hygro = 0.0; // Comme le capteur est désactivé , on renvoie la valeur 0
@@ -647,48 +647,49 @@ void time(prelevement *prel){ //lorsque nous enregistrons nos données, il nous 
 //////////////////////////
 
 void GPS(prelevement *prel) {
-    SoftwareSerial ss(6, 7);  // Declare pins for software serial
+    SoftwareSerial ss(6, 7);  // Les pins utilisées pour émulation d'une liaison série
     ss.begin(9600);
   
-    // Check if the GPS is available
+    // On regarde si le gps se lance
     if (!ss.read()) { 
         SetErrors(2); // on lance l'erreur
         return;
     }
 
-    char gpsData[58]; // Buffer to store GPS data
-    tp_capt = 1;  // Initialize capture flag
+    char gpsData[58]; // Tableau pour stocker les données du gps
+    tp_capt = 1;  // Initialise capture flag
 
-    // Attempt to read GPS data until a GPGGA sentence is found or timeout occurs
+    // On cherche à obtenir la trame GPGGA
     while (tp_capt) {
         if (ss.available()) {
             int len = ss.readBytesUntil('\n', gpsData, sizeof(gpsData) - 1);
             gpsData[len] = '\0'; // Null-terminate the string
             if (strncmp(gpsData, "$GPGGA", 6) == 0) {
-                break; // On a obtenu la trame voulue
+                break; // On a obtenu la trame voulue, on garde ses données et on sort de la boucle
             }
         }
     }
-
     tp_capt = 0;
+
     ss.flush();
 
-    // Tokenize the GPS data
-    char *token = strtok(gpsData, ","); // Tokenize the GPS data
+    // On divise la Trame NVMA
+    char *token = strtok(gpsData, ","); // On divise notre Trame en utilisant les ","
     int i = 0;
-    char *data[10]; // Array to store different parts of the GPS data
+    char *data[10]; // On déclare un tableau pour stocker les différents morceaux de notre trame
 
-    while (token != NULL && i < 10) {
-        data[i++] = token; // Add the token to the array
-        token = strtok(NULL, ","); // Get the next token
+    while (token != NULL && i < 10) { // Tant que le token suivant n'est pas nul,
+
+        data[i++] = token; // On stocke le contenu de notre token dans l'adresse suivante de Data
+        token = strtok(NULL, ","); // On cherche le prochain token
     }
 
     // Ensure that enough data is available before formatting
-    if (i > 5) { // Check if there are enough data parts
-        // Format the GPS coordinates into the prel structure
+    if (i > 5) { // On regarde si il y a suffisament de morceaux non nul
+        // On attribue data[2], la valeur Nord ainsi que data[3], son orientation, data[4], la valeur pour le Sud et data[5] son orientation
         snprintf(prel->gps, sizeof(prel->gps), "%s%s  %s%s", data[2], data[3], data[4], data[5]);
     } else {
-        strcpy(prel->gps, "NA"); // Indicate values are not available
+        strcpy(prel->gps, "NA"); // La trame n'est pas complête, ce qui veux dire que le GPS est initialisé
     }
 }
 
@@ -706,21 +707,27 @@ void save(prelevement *prel) {
         SetErrors(6);
         return; // Sortir si l'initialisation échoue
     }
-
+    
     // Récupérer l'indice en octets maximal pour un fichier dans l'EEPROM
-    int max_size;
-    EEPROM.get(FILE_MAX_SIZE_ADDR, max_size);
+
+     int max_size;
+     EEPROM.get(FILE_MAX_SIZE_ADDR, max_size);
+     Serial.println(max_size);
+
+    // On regarde si il reste de la place 
+
+    EspaceLibre(max_size, &sd);
 
     // Déclaration de la variable du type SdFile pour ouvrir les fichiers
-    SdFile file;
+     SdFile file;
 
     // Essayer de trouver une place pour notre fichier
-    char truename[20]; // Taille pour les noms de fichiers
-    int size;
+     char truename[20]; // Taille pour les noms de fichiers
+     int size;
 
     // Trouver un nom de fichier valide
-    for (byte i = 0; i < 250; i++) {
-        sprintf(truename, "%s%d.txt", prel->nom, i);
+    for (byte i = 0; i < 254; i++) {
+        sprintf(truename, "%s%d.txt", prel->nom, i); /// Va faire défiler nos fichier 1 à 1
         if (file.open(truename, O_READ)) {
             size = file.fileSize();
             file.close();
@@ -735,7 +742,7 @@ void save(prelevement *prel) {
     // Si le fichier n'existe pas encore, le créer et ajouter les en-têtes
     if (!sd.exists(truename)) {
         if (file.open(truename, O_WRONLY | O_CREAT | O_AT_END)) {
-            file.print("  H            ,Pos                                 ,Temp             ,Lum            ,Atm        ,       Hum\n");
+            file.print("H \t Pos \t \t Temp \t \t Lum \t \t Atm \t Hum |\n");
             file.close(); // Fermer le fichier après avoir écrit les en-têtes
         }
     }
@@ -743,16 +750,16 @@ void save(prelevement *prel) {
     // Enregistrement des valeurs de nos prélèvements dans le fichier
     if (file.open(truename, O_WRONLY | O_AT_END)) {
         file.print(prel->time);
-        file.print("       "); // Espacement entre les colonnes
+        file.print("\t \t"); // Espacement entre les colonnes
         file.print(prel->gps);
-        file.print("          ");
-        if(prel->thermo == 0.0){file.print("NA");}else{file.print(prel->thermo);}
-        file.print("        ");
+        file.print("\t \t");
+        if(prel->thermo == 0.0){file.print("NA");}else{file.print(prel->thermo);} 
+        file.print("\t \t");
         file.print(prel->lum);
-        file.print("          ");
+        file.print("\t \t");
         if(prel->atmo == 0.0){file.print("NA");}else{file.print(prel->atmo);}
-        file.print("         ");
-        if(prel->hygro == 0.0){file.print("NA");}else{file.print(prel->hygro);} // Écrit une nouvelle ligne après les valeurs
+        file.print("\t \t");
+        if(prel->hygro == 0.0){file.print("NA");}else{file.print(prel->hygro);}
         file.print("\n");
         file.close(); // Fermer le fichier après l'écriture
         Serial.println("Sauvegarde réussie");
@@ -760,19 +767,30 @@ void save(prelevement *prel) {
 }
 
 
+///////////////////////////////////////////////////////////////////////
+// Fonction pour déterminer si il reste de la place dans la carte sd //
+///////////////////////////////////////////////////////////////////////
+
+void EspaceLibre(int max_size, SdFat *sd){
+
+   uint32_t freeClusters = sd->vol()->freeClusterCount(); // Donne le nombre de clusters libres, cette opération est très chronophage(environ une minute pour l'exécution pour une carte de 8 GO avec une taille d'allocation de 2048o)
+     if(freeClusters*2048 < max_size){ // Si le nombre de clusters libre multiplié par la taille d'allocation de clusters de notre carte SD est inférieur à la taille maximale d'un fichier , on appelle l'erreur place insuffisante sur la carte
+      SetErrors(5);
+     }
+}
 
 
 //---DEFINITION DES MODES---//
 
-void stad () {///Mode standard
+void stad () {///Mode Standard
 
  leds.setColorRGB(vert);}
 
-void cfg () {
+void cfg () {///Mode Configuration
   
   leds.setColorRGB(jaune);}
 
-void eco () {
+void eco () {///Mode Economie
   
   leds.setColorRGB(bleu);}
 
@@ -868,3 +886,6 @@ void SetErrors(int er_code){
         sda_er(6);
 	}
 }
+
+
+
