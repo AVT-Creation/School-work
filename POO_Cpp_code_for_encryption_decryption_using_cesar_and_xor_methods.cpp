@@ -319,3 +319,17 @@ std::ifstream fichier(filename);  // Ouvrir le fichier en mode lecture
  
  
  }
+
+
+
+ /*
+ 
+ Pour la compilation, entrez la commande (-Os non obligatoire car optimisation) :
+
+ g++ nom.cpp -o executable.exe -Os
+
+ et pour lancer :
+
+ ./executable.exe
+
+ */
